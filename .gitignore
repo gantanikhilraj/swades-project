@@ -36,3 +36,8 @@ DerivedData/
 *.xcuserstate
 *.xcworkspace/
 !default.xcworkspace
+
+# Firebase Admin Credentials
+*firebase-adminsdk*.json
+firebase-service-account.json
+

@@ -38,8 +38,19 @@ if (fs.existsSync(serviceAccountPath)) {
     } catch (err) {
         console.error('Failed to initialize Firebase Admin with service account:', err.message);
     }
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        isFirebaseInitialized = true;
+        console.log('Firebase Admin initialized successfully from environment variable.');
+    } catch (err) {
+        console.error('Failed to initialize Firebase Admin with env variable:', err.message);
+    }
 } else {
-    console.warn('WARNING: firebase-service-account.json not found in server directory. FCM push notifications will fall back to logging instead of sending live alerts.');
+    console.warn('WARNING: firebase-service-account.json not found and FIREBASE_SERVICE_ACCOUNT env var not set. FCM push notifications will fall back to logging instead of sending live alerts.');
 }
 
 // Helper function to dispatch push notification
