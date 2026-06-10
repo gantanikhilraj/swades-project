@@ -9,6 +9,14 @@ class MyBookingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(userBookingsProvider);
+    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMutedColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final textLightMutedColor = isDark ? Colors.white38 : const Color(0xFF94A3B8);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+    final accentColor = isDark ? const Color(0xFF00FF87) : Theme.of(context).primaryColor;
 
     return bookingsAsync.when(
       data: (bookings) {
@@ -22,15 +30,15 @@ class MyBookingsScreen extends ConsumerWidget {
                   Icon(
                     Icons.calendar_today_outlined,
                     size: 64,
-                    color: Colors.white.withOpacity(0.2),
+                    color: textColor.withOpacity(0.2),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'No bookings found',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70,
+                      color: textMutedColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -39,7 +47,7 @@ class MyBookingsScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.4),
+                      color: textLightMutedColor,
                     ),
                   ),
                 ],
@@ -50,8 +58,8 @@ class MyBookingsScreen extends ConsumerWidget {
 
         return RefreshIndicator(
           onRefresh: () => ref.refresh(userBookingsProvider.future),
-          color: const Color(0xFF00FF87),
-          backgroundColor: const Color(0xFF1E293B),
+          color: accentColor,
+          backgroundColor: cardColor,
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: bookings.length,
@@ -77,11 +85,13 @@ class MyBookingsScreen extends ConsumerWidget {
               final timeSlotStr = '$startTimeStr - $endTimeStr';
 
               return Card(
-                color: const Color(0xFF1E293B),
+                color: cardColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
+                  side: isDark ? BorderSide.none : BorderSide(color: dividerColor, width: 1),
                 ),
                 margin: const EdgeInsets.only(bottom: 14),
+                elevation: isDark ? 4 : 1,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -97,10 +107,10 @@ class MyBookingsScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   venue?.name ?? 'Unknown Venue',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: textColor,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -109,15 +119,15 @@ class MyBookingsScreen extends ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF00FF87).withOpacity(0.15),
+                                        color: accentColor.withOpacity(0.15),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         venue?.sportType ?? 'Sport',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF00FF87),
+                                          color: accentColor,
                                         ),
                                       ),
                                     ),
@@ -127,7 +137,7 @@ class MyBookingsScreen extends ConsumerWidget {
                                         venue?.location ?? '',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Colors.white.withOpacity(0.5),
+                                          color: textMutedColor,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -151,26 +161,26 @@ class MyBookingsScreen extends ConsumerWidget {
                             ),
                         ],
                       ),
-                      const Divider(color: Colors.white10, height: 24),
+                      Divider(color: dividerColor, height: 24),
                       // Date & Time details
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today, size: 16, color: Colors.white54),
+                          Icon(Icons.calendar_today, size: 16, color: textMutedColor),
                           const SizedBox(width: 8),
                           Text(
                             formattedDate,
-                            style: const TextStyle(fontSize: 13, color: Colors.white70),
+                            style: TextStyle(fontSize: 13, color: textMutedColor),
                           ),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.access_time, size: 16, color: Colors.white54),
+                          Icon(Icons.access_time, size: 16, color: textMutedColor),
                           const SizedBox(width: 8),
                           Text(
                             timeSlotStr,
-                            style: const TextStyle(fontSize: 13, color: Colors.white70),
+                            style: TextStyle(fontSize: 13, color: textMutedColor),
                           ),
                         ],
                       ),
@@ -200,9 +210,9 @@ class MyBookingsScreen extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Center(
+      loading: () => Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF00FF87),
+          color: accentColor,
         ),
       ),
       error: (error, stackTrace) => Center(
@@ -213,16 +223,21 @@ class MyBookingsScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Failed to load bookings',
-                style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                style: TextStyle(color: textMutedColor, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              Text(error.toString(), style: const TextStyle(fontSize: 11, color: Colors.white30)),
+              Text(error.toString(), style: TextStyle(fontSize: 11, color: textLightMutedColor)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.refresh(userBookingsProvider),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E293B)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: cardColor,
+                  foregroundColor: textColor,
+                  elevation: isDark ? 2 : 0,
+                  side: isDark ? BorderSide.none : BorderSide(color: dividerColor),
+                ),
                 child: const Text('Retry'),
               ),
             ],
@@ -239,22 +254,31 @@ class MyBookingsScreen extends ConsumerWidget {
     String venueId,
     String bookingDate,
   ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMutedColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final textLightMutedColor = isDark ? Colors.white38 : const Color(0xFF94A3B8);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text(
-          'Cancel Booking',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        backgroundColor: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
-        content: const Text(
+        title: Text(
+          'Cancel Booking',
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
           'Are you sure you want to cancel this booking? This action cannot be undone.',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: textMutedColor),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep Booking', style: TextStyle(color: Colors.white54)),
+            child: Text('Keep Booking', style: TextStyle(color: textLightMutedColor)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),

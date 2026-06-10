@@ -58,6 +58,12 @@ class _VenueListScreenState extends ConsumerState<VenueListScreen> {
     final user = ref.watch(currentUserProvider);
     final userEmail = user?.email ?? 'Sports Fan';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMutedColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final textLightMutedColor = isDark ? Colors.white38 : const Color(0xFF94A3B8);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -132,27 +138,27 @@ class _VenueListScreenState extends ConsumerState<VenueListScreen> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  backgroundColor: const Color(0xFF1E293B),
+                  backgroundColor: cardColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Sign Out',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: textColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  content: const Text(
+                  content: Text(
                     'Are you sure you want to sign out of QuickSlot?',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: textMutedColor),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
-                        style: TextStyle(color: Colors.white38),
+                        style: TextStyle(color: textLightMutedColor),
                       ),
                     ),
                     ElevatedButton(
@@ -216,6 +222,14 @@ class VenueExploreView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final venuesAsync = ref.watch(venuesProvider);
+    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMutedColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final textLightMutedColor = isDark ? Colors.white38 : const Color(0xFF94A3B8);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+    final accentColor = isDark ? const Color(0xFF00FF87) : Theme.of(context).primaryColor;
 
     return venuesAsync.when(
       data: (venues) {
@@ -224,16 +238,16 @@ class VenueExploreView extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.sports, size: 64, color: Colors.white.withOpacity(0.3)),
+                Icon(Icons.sports, size: 64, color: textColor.withOpacity(0.3)),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'No venues available',
-                  style: TextStyle(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, color: textMutedColor, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Seeding data might have failed or database is empty.',
-                  style: TextStyle(fontSize: 14, color: Colors.white38),
+                  style: TextStyle(fontSize: 14, color: textLightMutedColor),
                 ),
               ],
             ),
@@ -242,8 +256,8 @@ class VenueExploreView extends ConsumerWidget {
 
         return RefreshIndicator(
           onRefresh: () => ref.refresh(venuesProvider.future),
-          color: const Color(0xFF00FF87),
-          backgroundColor: const Color(0xFF1E293B),
+          color: accentColor,
+          backgroundColor: cardColor,
           child: ListView.builder(
             padding: const EdgeInsets.all(16.0),
             itemCount: venues.length,
@@ -252,12 +266,13 @@ class VenueExploreView extends ConsumerWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: Card(
-                  color: const Color(0xFF1E293B),
+                  color: cardColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
+                    side: isDark ? BorderSide.none : BorderSide(color: dividerColor, width: 1),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  elevation: 4,
+                  elevation: isDark ? 4 : 1,
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -281,8 +296,8 @@ class VenueExploreView extends ConsumerWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   height: 160,
-                                  color: Colors.white10,
-                                  child: const Icon(Icons.broken_image, size: 48, color: Colors.white30),
+                                  color: dividerColor,
+                                  child: Icon(Icons.broken_image, size: 48, color: textLightMutedColor),
                                 );
                               },
                             ),
@@ -292,15 +307,15 @@ class VenueExploreView extends ConsumerWidget {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF00FF87),
+                                  color: accentColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   venue.sportType,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
+                                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
                                   ),
                                 ),
                               ),
@@ -315,23 +330,23 @@ class VenueExploreView extends ConsumerWidget {
                             children: [
                               Text(
                                 venue.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: textColor,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  const Icon(Icons.location_on, size: 16, color: Colors.white54),
+                                  Icon(Icons.location_on, size: 16, color: textMutedColor),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
                                       venue.location,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.white54,
+                                        color: textMutedColor,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -347,12 +362,12 @@ class VenueExploreView extends ConsumerWidget {
                                     'View Slots',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF00FF87),
+                                      color: accentColor,
                                       fontSize: 14,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_forward, size: 16, color: Color(0xFF00FF87)),
+                                  Icon(Icons.arrow_forward, size: 16, color: accentColor),
                                 ],
                               ),
                             ],
@@ -367,9 +382,9 @@ class VenueExploreView extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Center(
+      loading: () => Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF00FF87),
+          color: accentColor,
         ),
       ),
       error: (error, stackTrace) => Center(
@@ -380,15 +395,15 @@ class VenueExploreView extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Something went wrong',
-                style: TextStyle(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, color: textMutedColor, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 error.toString(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: Colors.white30),
+                style: TextStyle(fontSize: 12, color: textLightMutedColor),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -396,8 +411,10 @@ class VenueExploreView extends ConsumerWidget {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E293B),
-                  foregroundColor: Colors.white,
+                  backgroundColor: cardColor,
+                  foregroundColor: textColor,
+                  elevation: isDark ? 2 : 0,
+                  side: isDark ? BorderSide.none : BorderSide(color: dividerColor),
                 ),
               ),
             ],

@@ -35,30 +35,39 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
 
   void _handleBooking(Slot slot) async {
     final dateStr = _formatDate(_selectedDate);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMutedColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final textLightMutedColor = isDark ? Colors.white38 : const Color(0xFF94A3B8);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final accentColor = isDark ? const Color(0xFF00FF87) : Theme.of(context).primaryColor;
 
     // Show confirmation dialog
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text(
+        backgroundColor: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
           'Confirm Booking',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         content: Text(
           'Do you want to book ${widget.venue.name} at ${slot.startTime} on ${DateFormat('EEE, MMM d').format(_selectedDate)}?',
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(color: textMutedColor),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: Text('Cancel', style: TextStyle(color: textLightMutedColor)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00FF87),
-              foregroundColor: const Color(0xFF0F172A),
+              backgroundColor: accentColor,
+              foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
             ),
             child: const Text('Book Now'),
           ),
@@ -72,8 +81,8 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: Color(0xFF00FF87)),
+        builder: (context) => Center(
+          child: CircularProgressIndicator(color: accentColor),
         ),
       );
 
@@ -100,22 +109,25 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              backgroundColor: const Color(0xFF1E293B),
+              backgroundColor: cardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               icon: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 48),
-              title: const Text(
+              title: Text(
                 'Slot Already Taken',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
               ),
               content: Text(
                 result.message,
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: textMutedColor),
               ),
               actions: [
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00FF87),
-                    foregroundColor: const Color(0xFF0F172A),
+                    backgroundColor: accentColor,
+                    foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                   ),
                   child: const Text('OK'),
                 ),
@@ -133,21 +145,30 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
     final slotsAsync = ref.watch(slotsProvider(SlotArg(venueId: widget.venue.id, date: dateStr)));
     final currentUser = ref.watch(currentUserProvider);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMutedColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final textLightMutedColor = isDark ? Colors.white38 : const Color(0xFF94A3B8);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+    final accentColor = isDark ? const Color(0xFF00FF87) : Theme.of(context).primaryColor;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // Premium collapsing header with image
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
-            backgroundColor: const Color(0xFF1E293B),
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.venue.name,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
                   shadows: [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(1, 1))],
                 ),
               ),
@@ -158,7 +179,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                     widget.venue.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Container(color: Colors.white10);
+                      return Container(color: cardColor);
                     },
                   ),
                   const DecoratedBox(
@@ -184,12 +205,12 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                   // Location details
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.white70, size: 20),
+                      Icon(Icons.location_on, color: textMutedColor, size: 20),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           widget.venue.location,
-                          style: const TextStyle(fontSize: 14, color: Colors.white70),
+                          style: TextStyle(fontSize: 14, color: textMutedColor),
                         ),
                       ),
                     ],
@@ -197,19 +218,19 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.sports, color: Color(0xFF00FF87), size: 20),
+                      Icon(Icons.sports, color: accentColor, size: 20),
                       const SizedBox(width: 6),
                       Text(
                         widget.venue.sportType,
-                        style: const TextStyle(fontSize: 14, color: Color(0xFF00FF87), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 14, color: accentColor, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
-                  const Divider(color: Colors.white12, height: 32),
+                  Divider(color: dividerColor, height: 32),
                   // Date Picker
-                  const Text(
+                  Text(
                     'Select Date',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
@@ -232,10 +253,10 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                             child: Container(
                               width: 65,
                               decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFF00FF87) : const Color(0xFF1E293B),
+                                color: isSelected ? accentColor : cardColor,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: isSelected ? const Color(0xFF00FF87) : Colors.white12,
+                                  color: isSelected ? accentColor : dividerColor,
                                 ),
                               ),
                               child: Column(
@@ -246,7 +267,9 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected ? const Color(0xFF0F172A) : Colors.white54,
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF0F172A) : Colors.white)
+                                          : textMutedColor,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -255,7 +278,9 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF0F172A) : Colors.white)
+                                          : textColor,
                                     ),
                                   ),
                                 ],
@@ -266,10 +291,10 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                       },
                     ),
                   ),
-                  const Divider(color: Colors.white12, height: 32),
-                  const Text(
+                  Divider(color: dividerColor, height: 32),
+                  Text(
                     'Select Hourly Slot',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -280,9 +305,9 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
           slotsAsync.when(
             data: (slots) {
               if (slots.isEmpty) {
-                return const SliverFillRemaining(
+                return SliverFillRemaining(
                   child: Center(
-                    child: Text('No slots configured', style: TextStyle(color: Colors.white54)),
+                    child: Text('No slots configured', style: TextStyle(color: textMutedColor)),
                   ),
                 );
               }
@@ -301,26 +326,26 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                       final slot = slots[index];
                       final isBookedByMe = slot.isBooked && currentUser != null && slot.userId == currentUser.id;
 
-                      Color cardColor;
-                      Color borderColor;
-                      Color textColor;
+                      Color gridCardColor;
+                      Color gridBorderColor;
+                      Color gridTextColor;
                       Widget suffixWidget = const SizedBox();
 
                       if (isBookedByMe) {
-                        cardColor = const Color(0xFF3B82F6).withOpacity(0.15); // blue
-                        borderColor = const Color(0xFF3B82F6);
-                        textColor = const Color(0xFF3B82F6);
+                        gridCardColor = const Color(0xFF3B82F6).withOpacity(0.15); // blue
+                        gridBorderColor = const Color(0xFF3B82F6);
+                        gridTextColor = const Color(0xFF3B82F6);
                         suffixWidget = const Icon(Icons.check_circle, size: 12, color: Color(0xFF3B82F6));
                       } else if (slot.isBooked) {
-                        cardColor = Colors.white.withOpacity(0.03);
-                        borderColor = Colors.white.withOpacity(0.08);
-                        textColor = Colors.white24;
-                        suffixWidget = const Icon(Icons.lock, size: 10, color: Colors.white24);
+                        gridCardColor = isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03);
+                        gridBorderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08);
+                        gridTextColor = isDark ? Colors.white24 : Colors.black26;
+                        suffixWidget = Icon(Icons.lock, size: 10, color: isDark ? Colors.white24 : Colors.black26);
                       } else {
                         // Available
-                        cardColor = const Color(0xFF00FF87).withOpacity(0.05);
-                        borderColor = const Color(0xFF00FF87).withOpacity(0.4);
-                        textColor = const Color(0xFF00FF87);
+                        gridCardColor = accentColor.withOpacity(0.05);
+                        gridBorderColor = accentColor.withOpacity(0.4);
+                        gridTextColor = accentColor;
                       }
 
                       return InkWell(
@@ -328,9 +353,9 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: cardColor,
+                            color: gridCardColor,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: borderColor, width: 1.5),
+                            border: Border.all(color: gridBorderColor, width: 1.5),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -340,7 +365,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: textColor,
+                                  color: gridTextColor,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -356,7 +381,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: textColor.withOpacity(0.8),
+                                      color: gridTextColor.withOpacity(0.8),
                                     ),
                                   ),
                                   if (isBookedByMe || slot.isBooked) ...[
@@ -375,9 +400,9 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                 ),
               );
             },
-            loading: () => const SliverFillRemaining(
+            loading: () => SliverFillRemaining(
               child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF00FF87)),
+                child: CircularProgressIndicator(color: accentColor),
               ),
             ),
             error: (error, stackTrace) => SliverFillRemaining(
@@ -389,16 +414,21 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                     children: [
                       const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Failed to load slots',
-                        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: textMutedColor, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
-                      Text(error.toString(), style: const TextStyle(fontSize: 11, color: Colors.white30)),
+                      Text(error.toString(), style: TextStyle(fontSize: 11, color: textLightMutedColor)),
                       const SizedBox(height: 12),
                       ElevatedButton(
                         onPressed: () => ref.refresh(slotsProvider(SlotArg(venueId: widget.venue.id, date: dateStr))),
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E293B)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cardColor,
+                          foregroundColor: textColor,
+                          elevation: isDark ? 2 : 0,
+                          side: isDark ? BorderSide.none : BorderSide(color: dividerColor),
+                        ),
                         child: const Text('Retry'),
                       )
                     ],
