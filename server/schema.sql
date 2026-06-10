@@ -26,7 +26,6 @@ CREATE TABLE bookings (
 -- Seed Initial Venues
 INSERT INTO venues (name, sport_type, location, image_url) VALUES
 ('Greenfield Badminton Club', 'Badminton', 'Sector 62, Noida', 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&auto=format&fit=crop&q=60'),
-('Apex Turf Arena', 'Football', 'Indiranagar, Bengaluru', 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop&q=60'),
 ('Smash & Volley Tennis Center', 'Tennis', 'Bandra West, Mumbai', 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=500&auto=format&fit=crop&q=60'),
 ('Primal Basketball Court', 'Basketball', 'Gachibowli, Hyderabad', 'https://images.unsplash.com/photo-1544698310-74ea9d1c8258?w=500&auto=format&fit=crop&q=60');
 
