@@ -145,7 +145,7 @@ app.get('/venues/:id/slots', async (req, res) => {
         });
 
         // Construct 16 hourly slots with booking status
-        const slots = SLOT_HOURS.map(hour => {
+        let slots = SLOT_HOURS.map(hour => {
             const booking = bookingMap.get(hour);
             return {
                 start_time: hour,
@@ -154,6 +154,21 @@ app.get('/venues/:id/slots', async (req, res) => {
                 user_id: booking ? booking.user_id : null
             };
         });
+
+        // Filter out past slots if the requested date is today
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const localDateString = `${yyyy}-${mm}-${dd}`;
+
+        if (date === localDateString) {
+            const currentHour = today.getHours();
+            slots = slots.filter(slot => {
+                const slotHour = parseInt(slot.start_time.split(':')[0], 10);
+                return slotHour > currentHour;
+            });
+        }
 
         return res.json(slots);
     } catch (err) {
@@ -175,6 +190,25 @@ app.post('/bookings', requireAuth, async (req, res) => {
     const formattedStartTime = start_time.substring(0, 5);
     if (!SLOT_HOURS.includes(formattedStartTime)) {
         return res.status(400).json({ error: 'Invalid start time slot. Must be between 06:00 and 21:00' });
+    }
+
+    // Block booking past slots
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const localDateString = `${yyyy}-${mm}-${dd}`;
+
+    if (date < localDateString) {
+        return res.status(400).json({ error: 'Cannot book slots in the past' });
+    }
+
+    if (date === localDateString) {
+        const currentHour = today.getHours();
+        const slotHour = parseInt(formattedStartTime.split(':')[0], 10);
+        if (slotHour <= currentHour) {
+            return res.status(400).json({ error: 'Cannot book a past slot today' });
+        }
     }
 
     try {
@@ -226,6 +260,7 @@ app.post('/bookings', requireAuth, async (req, res) => {
 // 4. GET /users/{id}/bookings - A user's bookings (Protected)
 app.get('/users/:id/bookings', requireAuth, async (req, res) => {
     const userId = req.params.id;
+    console.log(`[Backend API] GET /users/${userId}/bookings requested with query:`, req.query);
 
     // Verify that the requested booking ID matches the authenticated user ID
     if (req.user.id !== userId) {
@@ -233,14 +268,14 @@ app.get('/users/:id/bookings', requireAuth, async (req, res) => {
     }
 
     try {
-        const { data, error } = await supabase
+        let query = supabase
             .from('bookings')
             .select(`
                 id,
                 user_id,
                 booking_date,
                 start_time,
-                venues (
+                venues!inner (
                     id,
                     name,
                     sport_type,
@@ -248,11 +283,28 @@ app.get('/users/:id/bookings', requireAuth, async (req, res) => {
                     image_url
                 )
             `)
-            .eq('user_id', userId)
+            .eq('user_id', userId);
+
+        const { date, start_time, sport_type } = req.query;
+
+        if (date) {
+            query = query.eq('booking_date', date);
+        }
+        if (start_time) {
+            // Support both '10:00' and '10:00:00' formats
+            const formattedTime = start_time.length === 5 ? `${start_time}:00` : start_time;
+            query = query.eq('start_time', formattedTime);
+        }
+        if (sport_type) {
+            query = query.eq('venues.sport_type', sport_type);
+        }
+
+        const { data, error } = await query
             .order('booking_date', { ascending: true })
             .order('start_time', { ascending: true });
 
         if (error) throw error;
+        console.log(`[Backend API] Query completed. Returning ${data ? data.length : 0} bookings.`);
         return res.json(data || []);
     } catch (err) {
         console.error('Error fetching user bookings:', err.message);

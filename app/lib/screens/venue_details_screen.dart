@@ -22,15 +22,39 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
+    final now = DateTime.now();
+    // Operational hours end after the last slot (21:00) has started/passed.
+    // If it's 9:00 PM (21:00) or later, today's slots are completed.
+    final bool isTodayCompleted = now.hour >= 21;
+    
+    final startDate = isTodayCompleted 
+        ? now.add(const Duration(days: 1)) 
+        : now;
+        
+    _selectedDate = startDate;
+    
     // Generate next 7 days for booking
     for (int i = 0; i < 7; i++) {
-      _dates.add(DateTime.now().add(Duration(days: i)));
+      _dates.add(startDate.add(Duration(days: i)));
     }
   }
 
   String _formatDate(DateTime dt) {
     return DateFormat('yyyy-MM-dd').format(dt);
+  }
+
+  String _formatToAmPm(String time24) {
+    try {
+      final parts = time24.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = parts[1];
+      final period = hour >= 12 ? 'PM' : 'AM';
+      var hour12 = hour % 12;
+      if (hour12 == 0) hour12 = 12;
+      return '$hour12:$minute $period';
+    } catch (e) {
+      return time24;
+    }
   }
 
   void _handleBooking(Slot slot) async {
@@ -55,7 +79,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
           style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'Do you want to book ${widget.venue.name} at ${slot.startTime} on ${DateFormat('EEE, MMM d').format(_selectedDate)}?',
+          'Do you want to book ${widget.venue.name} at ${_formatToAmPm(slot.startTime)} on ${DateFormat('EEE, MMM d').format(_selectedDate)}?',
           style: TextStyle(color: textMutedColor),
         ),
         actions: [
@@ -307,8 +331,39 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
             data: (slots) {
               if (slots.isEmpty) {
                 return SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(
-                    child: Text('No slots configured', style: TextStyle(color: textMutedColor)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.event_busy_rounded,
+                            size: 64,
+                            color: textColor.withOpacity(0.2),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No slots available',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textMutedColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'All slots for today have expired or are booked. Please check another date.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textLightMutedColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               }
@@ -362,9 +417,9 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                slot.startTime,
+                                _formatToAmPm(slot.startTime),
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: gridTextColor,
                                 ),
