@@ -29,6 +29,30 @@ class SlotArg {
 
 // Fetch slots for a venue and date
 final slotsProvider = FutureProvider.family<List<Slot>, SlotArg>((ref, arg) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  // Create a real-time channel to listen to any booking changes for this specific venue.
+  // When a new booking is inserted or deleted, we invalidate this provider to refresh the slots list.
+  final channel = supabase
+      .channel('public:bookings:venue:${arg.venueId}')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'bookings',
+        filter: 'venue_id=eq.${arg.venueId}',
+        callback: (payload) {
+          debugPrint('Real-time bookings change detected for venue ${arg.venueId}: ${payload.eventType}');
+          ref.invalidateSelf();
+        },
+      );
+  
+  channel.subscribe();
+  
+  // Clean up the channel subscription when the provider is disposed/unwatched
+  ref.onDispose(() {
+    supabase.removeChannel(channel);
+  });
+
   final url = Uri.parse('$baseUrl/venues/${arg.venueId}/slots?date=${arg.date}');
   final response = await http.get(url);
 
@@ -48,6 +72,28 @@ final userBookingsProvider = FutureProvider<List<Booking>>((ref) async {
   if (currentUser == null || token == null) {
     return [];
   }
+
+  final supabase = ref.watch(supabaseClientProvider);
+
+  // Subscribe to real-time changes of the current user's bookings.
+  final channel = supabase
+      .channel('public:bookings:user:${currentUser.id}')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'bookings',
+        filter: 'user_id=eq.${currentUser.id}',
+        callback: (payload) {
+          debugPrint('Real-time bookings change detected for user ${currentUser.id}: ${payload.eventType}');
+          ref.invalidateSelf();
+        },
+      );
+
+  channel.subscribe();
+
+  ref.onDispose(() {
+    supabase.removeChannel(channel);
+  });
 
   final url = Uri.parse('$baseUrl/users/${currentUser.id}/bookings');
   final response = await http.get(
