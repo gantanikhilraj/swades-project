@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/booking_provider.dart';
+import 'fact_loader.dart';
+
 
 class MyBookingsScreen extends ConsumerWidget {
   const MyBookingsScreen({super.key});
@@ -249,11 +251,7 @@ class MyBookingsScreen extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => Center(
-              child: CircularProgressIndicator(
-                color: accentColor,
-              ),
-            ),
+            loading: () => const FactLoader(title: 'Loading Bookings... ⚡'),
             error: (error, stackTrace) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),

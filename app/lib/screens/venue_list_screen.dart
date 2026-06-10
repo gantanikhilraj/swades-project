@@ -8,6 +8,7 @@ import 'venue_details_screen.dart';
 import 'my_bookings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
+import 'fact_loader.dart';
 
 class VenueListScreen extends ConsumerStatefulWidget {
   const VenueListScreen({super.key});
@@ -382,11 +383,7 @@ class VenueExploreView extends ConsumerWidget {
           ),
         );
       },
-      loading: () => Center(
-        child: CircularProgressIndicator(
-          color: accentColor,
-        ),
-      ),
+      loading: () => const FactLoader(),
       error: (error, stackTrace) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
