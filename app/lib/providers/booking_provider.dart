@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../models/slot.dart';
 import '../models/booking.dart';
 import 'api_config.dart';
 import 'auth_provider.dart';
+import 'fcm_provider.dart';
 
 // Slot identifier argument class
 class SlotArg {
@@ -80,6 +82,7 @@ class BookingNotifier extends Notifier<AsyncValue<void>> {
     required String venueId,
     required String date,
     required String startTime,
+    required String venueName,
   }) async {
     state = const AsyncValue.loading();
     final token = ref.read(authSessionTokenProvider);
@@ -110,6 +113,17 @@ class BookingNotifier extends Notifier<AsyncValue<void>> {
         // Invalidate current slots and user bookings to trigger automatic UI refresh
         ref.invalidate(slotsProvider(SlotArg(venueId: venueId, date: date)));
         ref.invalidate(userBookingsProvider);
+
+        // Trigger local notification immediately as confirmation
+        try {
+          ref.read(fcmManagerProvider).showLocalNotification(
+            title: 'Booking Confirmed! ⚡',
+            body: 'Your booking is confirmed at $venueName for $date at ${startTime.substring(0, 5)}.',
+          );
+        } catch (e) {
+          debugPrint('Local Notification Error: $e');
+        }
+
         return BookingResult(success: true, message: 'Slot booked successfully!');
       } else if (response.statusCode == 409) {
         // Concurrency conflict (double booking)

@@ -243,4 +243,27 @@ class FcmManager {
       notificationDetails: notificationDetails,
     );
   }
+
+  // Public helper to show a custom local notification from client code (e.g. after booking response)
+  Future<void> showLocalNotification({required String title, required String body}) async {
+    final androidNotificationDetails = AndroidNotificationDetails(
+      _channel.id,
+      _channel.name,
+      channelDescription: _channel.description,
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    final notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+    );
+
+    await _localNotificationsPlugin.show(
+      id: title.hashCode ^ body.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: notificationDetails,
+    );
+  }
 }

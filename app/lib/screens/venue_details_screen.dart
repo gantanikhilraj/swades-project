@@ -90,6 +90,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
             venueId: widget.venue.id,
             date: dateStr,
             startTime: slot.startTime,
+            venueName: widget.venue.name,
           );
 
       // Dismiss loading dialog
