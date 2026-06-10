@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,17 +28,39 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return client.auth.onAuthStateChange;
 });
 
-// Helper provider to check if current user is logged in
-final currentUserProvider = Provider<User?>((ref) {
-  final authState = ref.watch(authStateProvider).value;
-  return authState?.session?.user ?? Supabase.instance.client.auth.currentUser;
-});
+// Helper class/provider to check if current user is logged in
+class CurrentUserNotifier extends Notifier<User?> {
+  @override
+  User? build() {
+    final client = ref.watch(supabaseClientProvider);
+    final sub = client.auth.onAuthStateChange.listen((data) {
+      Future.microtask(() {
+        state = data.session?.user;
+      });
+    });
+    ref.onDispose(() => sub.cancel());
+    return client.auth.currentUser;
+  }
+}
+
+final currentUserProvider = NotifierProvider<CurrentUserNotifier, User?>(CurrentUserNotifier.new);
 
 // Active user's JWT Token provider (for API headers)
-final authSessionTokenProvider = Provider<String?>((ref) {
-  final authState = ref.watch(authStateProvider).value;
-  return authState?.session?.accessToken ?? Supabase.instance.client.auth.currentSession?.accessToken;
-});
+class AuthSessionTokenNotifier extends Notifier<String?> {
+  @override
+  String? build() {
+    final client = ref.watch(supabaseClientProvider);
+    final sub = client.auth.onAuthStateChange.listen((data) {
+      Future.microtask(() {
+        state = data.session?.accessToken;
+      });
+    });
+    ref.onDispose(() => sub.cancel());
+    return client.auth.currentSession?.accessToken;
+  }
+}
+
+final authSessionTokenProvider = NotifierProvider<AuthSessionTokenNotifier, String?>(AuthSessionTokenNotifier.new);
 
 // Theme selection Notifier (persisted in SharedPreferences)
 class ThemeNotifier extends Notifier<ThemeMode> {
