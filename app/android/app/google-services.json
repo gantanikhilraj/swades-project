@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "592206140630",
+    "project_id": "swedes-bb2da",
+    "storage_bucket": "swedes-bb2da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592206140630:android:3ff8ed3390e3260106a577",
+        "android_client_info": {
+          "package_name": "com.nikhil.quickslot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAahFbvIRMtcjr8m0swcr4YVi-1xBAgfBw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

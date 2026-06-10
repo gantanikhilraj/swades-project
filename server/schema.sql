@@ -29,3 +29,11 @@ INSERT INTO venues (name, sport_type, location, image_url) VALUES
 ('Apex Turf Arena', 'Football', 'Indiranagar, Bengaluru', 'https://images.unsplash.com/photo-1579952362224-4bb22bc9788f?w=500&auto=format&fit=crop&q=60'),
 ('Smash & Volley Tennis Center', 'Tennis', 'Bandra West, Mumbai', 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=500&auto=format&fit=crop&q=60'),
 ('Primal Basketball Court', 'Basketball', 'Gachibowli, Hyderabad', 'https://images.unsplash.com/photo-1544698310-74ea9d1c8258?w=500&auto=format&fit=crop&q=60');
+
+-- Create user_fcm_tokens table
+CREATE TABLE IF NOT EXISTS user_fcm_tokens (
+    user_id TEXT PRIMARY KEY,
+    fcm_token TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+

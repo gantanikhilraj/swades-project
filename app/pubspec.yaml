@@ -37,6 +37,12 @@ dependencies:
   flutter_riverpod: ^3.3.2
   http: ^1.6.0
   intl: ^0.20.2
+  supabase_flutter: ^2.14.2
+  shared_preferences: ^2.5.5
+  firebase_core: ^4.10.0
+  firebase_messaging: ^16.3.0
+  flutter_local_notifications: ^20.1.0
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -54,11 +60,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/logo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

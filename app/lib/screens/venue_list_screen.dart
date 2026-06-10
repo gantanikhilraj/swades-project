@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/venue_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/fcm_provider.dart';
 import 'venue_details_screen.dart';
 import 'my_bookings_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
 
 class VenueListScreen extends ConsumerStatefulWidget {
@@ -15,48 +18,159 @@ class VenueListScreen extends ConsumerStatefulWidget {
 
 class _VenueListScreenState extends ConsumerState<VenueListScreen> {
   int _selectedIndex = 0;
+  late final StreamSubscription<AuthState> _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.session?.user == null) {
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+            (route) => false,
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final activeUser = ref.watch(userProvider);
+    // Initialize FCM when the user is logged in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(fcmManagerProvider).init(context);
+    });
+
+    final user = ref.watch(currentUserProvider);
+    final userEmail = user?.email ?? 'Sports Fan';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Modern slate-900 background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B), // slate-800
         elevation: 0,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white24,
-              backgroundImage: NetworkImage(activeUser.avatarUrl),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00FF87), Color(0xFF60EFFF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00FF87).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  userEmail.isNotEmpty ? userEmail[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'QuickSlot',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                Text(
-                  'Acting as: ${activeUser.name}',
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.6)),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'QuickSlot',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    userEmail,
+                    style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
-          // Switch User Quick Action
+          // Theme Toggle Action
           IconButton(
-            icon: const Icon(Icons.swap_horiz, color: Color(0xFF00FF87)),
-            tooltip: 'Switch User Profile',
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            tooltip: 'Toggle Theme',
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              ref.read(themeProvider.notifier).toggleTheme();
+            },
+          ),
+          // Sign Out Action
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            tooltip: 'Sign Out',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: const Color(0xFF1E293B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: const Text(
+                    'Sign Out',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: const Text(
+                    'Are you sure you want to sign out of QuickSlot?',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.white38),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ref.read(authActionsProvider.notifier).signOut();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -76,9 +190,9 @@ class _VenueListScreenState extends ConsumerState<VenueListScreen> {
             _selectedIndex = index;
           });
         },
-        backgroundColor: const Color(0xFF1E293B),
-        selectedItemColor: const Color(0xFF00FF87),
-        unselectedItemColor: Colors.white30,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).disabledColor,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         items: const [

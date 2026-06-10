@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/slot.dart';
 import '../models/booking.dart';
 import 'api_config.dart';
-import 'user_provider.dart';
+import 'auth_provider.dart';
 
 // Slot identifier argument class
 class SlotArg {
@@ -40,9 +40,20 @@ final slotsProvider = FutureProvider.family<List<Slot>, SlotArg>((ref, arg) asyn
 
 // Fetch bookings for the current active user
 final userBookingsProvider = FutureProvider<List<Booking>>((ref) async {
-  final currentUser = ref.watch(userProvider);
+  final currentUser = ref.watch(currentUserProvider);
+  final token = ref.watch(authSessionTokenProvider);
+
+  if (currentUser == null || token == null) {
+    return [];
+  }
+
   final url = Uri.parse('$baseUrl/users/${currentUser.id}/bookings');
-  final response = await http.get(url);
+  final response = await http.get(
+    url,
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
 
   if (response.statusCode == 200) {
     final List<dynamic> body = jsonDecode(response.body);
@@ -71,15 +82,20 @@ class BookingNotifier extends Notifier<AsyncValue<void>> {
     required String startTime,
   }) async {
     state = const AsyncValue.loading();
-    final currentUser = ref.read(userProvider);
+    final token = ref.read(authSessionTokenProvider);
     final url = Uri.parse('$baseUrl/bookings');
+
+    if (token == null) {
+      state = const AsyncValue.data(null);
+      return BookingResult(success: false, message: 'You must be logged in to book slots');
+    }
 
     try {
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': currentUser.id,
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'venue_id': venueId,
@@ -120,14 +136,19 @@ class BookingNotifier extends Notifier<AsyncValue<void>> {
 
   Future<bool> cancelBooking(String bookingId, String venueId, String date) async {
     state = const AsyncValue.loading();
-    final currentUser = ref.read(userProvider);
+    final token = ref.read(authSessionTokenProvider);
     final url = Uri.parse('$baseUrl/bookings/$bookingId');
+
+    if (token == null) {
+      state = const AsyncValue.data(null);
+      return false;
+    }
 
     try {
       final response = await http.delete(
         url,
         headers: {
-          'X-User-Id': currentUser.id,
+          'Authorization': 'Bearer $token',
         },
       );
 

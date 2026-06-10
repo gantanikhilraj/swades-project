@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/venue.dart';
 import '../models/slot.dart';
 import '../providers/booking_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/auth_provider.dart';
 
 class VenueDetailsScreen extends ConsumerStatefulWidget {
   final Venue venue;
@@ -131,7 +131,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
   Widget build(BuildContext context) {
     final dateStr = _formatDate(_selectedDate);
     final slotsAsync = ref.watch(slotsProvider(SlotArg(venueId: widget.venue.id, date: dateStr)));
-    final currentUser = ref.watch(userProvider);
+    final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -299,7 +299,7 @@ class _VenueDetailsScreenState extends ConsumerState<VenueDetailsScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final slot = slots[index];
-                      final isBookedByMe = slot.isBooked && slot.userId == currentUser.id;
+                      final isBookedByMe = slot.isBooked && currentUser != null && slot.userId == currentUser.id;
 
                       Color cardColor;
                       Color borderColor;

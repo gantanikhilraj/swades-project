@@ -1,6 +1,6 @@
 # QuickSlot ⚡ Sports Slot Booking App
 
-QuickSlot is a real-time, concurrency-safe mobile application for booking sports slots (e.g., badminton courts, turf grounds). Users can view available venues, check hourly slots for any date, book them, and manage their bookings.
+QuickSlot is a real-time, concurrency-safe mobile application for booking sports slots (e.g., badminton courts, turf grounds). Users can authenticate via email/password or Google OAuth, view available venues, check hourly slots for any date, book them safely, and manage active bookings.
 
 ---
 
@@ -10,17 +10,20 @@ QuickSlot follows a monorepo structure consisting of a **Node.js + Express** API
 
 ```mermaid
 graph TD
-    FlutterApp[Flutter Client /app] -->|REST HTTP Requests with X-User-Id| ExpressServer[Express Server /server]
-    ExpressServer -->|Postgres INSERT query| Supabase[(Supabase / Postgres DB)]
+    FlutterApp[Flutter Client /app] -->|1. Authenticate / OAuth| SupabaseAuth[(Supabase Auth)]
+    FlutterApp -->|2. Get Session JWT| FlutterApp
+    FlutterApp -->|3. REST API with Bearer JWT| ExpressServer[Express Server /server]
+    ExpressServer -->|4. Verify JWT| SupabaseAuth
+    ExpressServer -->|5. Insert Booking| SupabaseDB[(Supabase PostgreSQL)]
 ```
 
 ### Concurrency Strategy (Double-Booking Prevention)
-The core requirement is that **no slot can be double-booked** (i.e. atomic slot reservation).
+The core requirement is that **no slot can be double-booked** (i.e., atomic slot reservation).
 1. We enforce this at the database layer using a **`UNIQUE constraint`** on the `bookings` table:
    ```sql
    CONSTRAINT unique_venue_slot UNIQUE (venue_id, booking_date, start_time)
    ```
-2. When two clients hit the `POST /bookings` endpoint simultaneously for the same slot, PostgreSQL's transactions guarantee that one insert will succeed and write to the transaction log first. The second insert will instantly fail with a **Unique Constraint Violation (PostgreSQL error code `23505`)**.
+2. When two clients hit the `POST /bookings` endpoint simultaneously for the same slot, PostgreSQL's transactions guarantee that only one insert succeeds. The second insert will instantly fail with a **Unique Constraint Violation (PostgreSQL error code `23505`)**.
 3. The Express backend catches the error code `23505` and returns a `409 Conflict` response to the client.
 4. The Flutter client intercepts this `409` code, displays a detailed warning dialog telling the user the slot has been taken, and automatically re-fetches the slots grid to show the updated status.
 
@@ -28,10 +31,16 @@ The core requirement is that **no slot can be double-booked** (i.e. atomic slot 
 
 ## 🛠️ Setup & Running Locally
 
-### 1. Database (Supabase) Setup
+### 1. Database & Authentication (Supabase) Setup
 1. Create a free project on [Supabase](https://supabase.com).
 2. Go to the **SQL Editor** tab and execute the contents of [schema.sql](file:///Users/admin/Downloads/swades/server/schema.sql) to create the tables (`venues` and `bookings`) and seed initial data.
-3. Obtain your project's **API URL** and **Anon Key** from the Supabase settings panel under *API*.
+3. Disable Row Level Security (RLS) on both tables (or add public access policies) so the API backend can query them using your public keys:
+   ```sql
+   ALTER TABLE venues DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE bookings DISABLE ROW LEVEL SECURITY;
+   ```
+4. Obtain your project's **API URL** and **Anon Key** from the Supabase settings panel under *API*.
+5. (Optional) For Google OAuth: Enable the Google provider under **Authentication -> Providers -> Google** in the Supabase console, and set your redirect URL to `io.supabase.quickslot://login-callback`.
 
 ### 2. Backend Server Setup
 1. Open the [server](file:///Users/admin/Downloads/swades/server) directory.
@@ -62,7 +71,6 @@ The core requirement is that **no slot can be double-booked** (i.e. atomic slot 
 ---
 
 ## ✂️ What We Cut & Why
-* **Full Authentication**: Cut full password/OTP auth to save time, replacing it with a simple X-User-Id header. This meets the "light auth" hackathon requirement and allowed us to focus completely on the booking flow and concurrency logic.
 * **WebSocket Updates (Bonus)**: We implemented rapid local state invalidation using Riverpod (which auto-refreshes the UI instantly after booking actions) instead of WebSockets. WebSockets would require setting up a custom pub/sub server or Supabase Realtime client, which was deferred to ensure the REST flow was bulletproof.
 
 ---
